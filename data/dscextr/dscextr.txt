@@ -1,0 +1,1 @@
+This directory will be used for store extract datasets generated from downloaded files.

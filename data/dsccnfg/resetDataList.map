@@ -1,0 +1,127 @@
+{
+  "DATASETS": [
+    {
+      "DSNAME": "reset_links",
+      "TABLEPATH": "/root/links",
+      "VARIABLES": [
+        {
+          "NAME": "ordinal_root",
+          "TYPE": "ORDINAL",
+          "PATH": "/root"
+        },
+        {
+          "NAME": "ordinal_links",
+          "TYPE": "ORDINAL",
+          "PATH": "/root/links"
+        },
+        {
+          "NAME": "method",
+          "TYPE": "CHARACTER",
+          "PATH": "/root/links/method",
+          "CURRENT_LENGTH": 3
+        },
+        {
+          "NAME": "rel",
+          "TYPE": "CHARACTER",
+          "PATH": "/root/links/rel",
+          "CURRENT_LENGTH": 4
+        },
+        {
+          "NAME": "href",
+          "TYPE": "CHARACTER",
+          "PATH": "/root/links/href",
+          "CURRENT_LENGTH": 186
+        },
+        {
+          "NAME": "uri",
+          "TYPE": "CHARACTER",
+          "PATH": "/root/links/uri",
+          "CURRENT_LENGTH": 130
+        }
+      ]
+    },
+    {
+      "DSNAME": "reset_root",
+      "TABLEPATH": "/root",
+      "VARIABLES": [
+        {
+          "NAME": "ordinal_root",
+          "TYPE": "ORDINAL",
+          "PATH": "/root"
+        },
+        {
+          "NAME": "accept",
+          "TYPE": "CHARACTER",
+          "PATH": "/root/accept",
+          "CURRENT_LENGTH": 32
+        },
+        {
+          "NAME": "start",
+          "TYPE": "NUMERIC",
+          "PATH": "/root/start"
+        },
+        {
+          "NAME": "count",
+          "TYPE": "NUMERIC",
+          "PATH": "/root/count"
+        },
+        {
+          "NAME": "limit",
+          "TYPE": "NUMERIC",
+          "PATH": "/root/limit"
+        },
+        {
+          "NAME": "version",
+          "TYPE": "NUMERIC",
+          "PATH": "/root/version"
+        }
+      ]
+    },
+    {
+      "DSNAME": "reset_items",
+      "TABLEPATH": "/root/items",
+      "VARIABLES": [
+        {
+          "NAME": "ordinal_root",
+          "TYPE": "ORDINAL",
+          "PATH": "/root"
+        },
+        {
+          "NAME": "ordinal_items",
+          "TYPE": "ORDINAL",
+          "PATH": "/root/items"
+        },
+        {
+          "NAME": "dataRangeStartTimeStamp",
+          "TYPE": "NUMERIC",
+		  "INFORMAT": [ "IS8601DT",19, 0 ],
+		  "FORMAT": ["DATETIME", 25],
+          "PATH": "/root/items/dataRangeStartTimeStamp",
+          "CURRENT_LENGTH": 8
+        },
+        {
+          "NAME": "dataRangeEndTimeStamp",
+          "TYPE": "NUMERIC",
+		  "INFORMAT": [ "IS8601DT",19, 0 ],
+		  "FORMAT": ["DATETIME", 25],		  
+          "PATH": "/root/items/dataRangeEndTimeStamp",
+          "CURRENT_LENGTH": 8
+        },
+        {
+          "NAME": "resetCompletedTimeStamp",
+          "TYPE": "NUMERIC",
+		  "INFORMAT": [ "IS8601DT",19, 0 ],
+		  "FORMAT": ["DATETIME", 25],
+          "PATH": "/root/items/resetCompletedTimeStamp",
+          "CURRENT_LENGTH": 24
+        },
+        {
+          "NAME": "downloadUrl",
+          "TYPE": "CHARACTER",
+          "PATH": "/root/items/downloadUrl",
+          "CURRENT_LENGTH": 222
+        }
+      ]
+    }
+  ]
+}
