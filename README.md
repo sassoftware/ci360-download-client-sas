@@ -8,6 +8,7 @@
 
 ### Prerequisites
 * BASE SAS9.4(M4)(Unicode Support)
+* Enable SAS to Allow XCMD System Option
 * Python3
 	Python is used to generate token for API authentication. 
 	make sure following python libraries are installed 
