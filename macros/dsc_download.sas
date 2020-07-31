@@ -15,7 +15,7 @@ options compress=yes ;
 	GLOBAL VARIABLES USED BY DOWNLOAD PROGRAM
 ******************************************************************************/
 %global DSC_DOWNLOAD_URL DSC_AGENT_NAME  DSC_TENANT_ID DSC_SECRET_KEY DSC_AUTH_TOKEN
-DSC_PROXY_HOST DSC_PROXY_PORT DSC_PROXY_AUTH DSC_LOAD_START_DTTM PYTHON_PATH 
+DSC_PROXY_HOST DSC_PROXY_PORT DSC_PROXY_AUTH DSC_LOAD_START_DTTM PYTHON_PATH
 DSC_HTTP_MAX_RETRY_ATTEMPTS DSC_HTTP_RETRY_WAIT_SEC DSC_FILE_READ_OPTION
 UTILITYLOCATION MART_NM CATEGORY CODE AUTORESET;
 
@@ -27,12 +27,13 @@ UTILITYLOCATION MART_NM CATEGORY CODE AUTORESET;
 /*****************************************************************************
 	SET THE NAME OF THE MART YOU WISH TO DOWNLOAD DATA E.G.
 	%let mart_nm=detail; or %let mart_nm=dbtReport; or %let mart_nm=snapshot;
+	or %let mart_nm=cdm;
 ******************************************************************************/
 %let mart_nm=detail;
 
 /*****************************************************************************
 	SET LOG LOCATION
-******************************************************************************/ 
+******************************************************************************/
 proc printto log="&UtilityLocation./logs/&mart_nm._%left(%sysfunc(datetime(),B8601DT15.)).log"; run;
 
 /*****************************************************************************
@@ -47,13 +48,13 @@ options mautosource sasautos=(dscautos,SASAUTOS);
 %let PYTHON_PATH=%str(C:\Python\Python37\python.exe);
 
 /******************************************************************************
-	SET DOWNLOAD API PARAMETERS  e.g. 
+	SET DOWNLOAD API PARAMETERS  e.g.
 	%let DSC_DOWNLOAD_URL=%nrstr(https://extapigwservice-prod.ci360.sas.com/marketingGateway/discoverService/dataDownload/eventData/);
 	%let DSC_AGENT_NAME=ci360_agent;
 	%let DSC_TENANT_ID=%str(abc123-ci360-tenant-id-xyz);
 	%let DSC_SECRET_KEY=%str(ABC123ci360clientSecretXYZ);
 
-	if the DOWNLOAD endpoint needs a proxy server then set the proxy options else set it to missing values e.g. 
+	if the DOWNLOAD endpoint needs a proxy server then set the proxy options else set it to missing values e.g.
 	%let DSC_PROXY_HOST=%nrstr(proxy.server.com);
 	%let DSC_PROXY_PORT=3128;
 	%let DSC_PROXY_AUTH=%nrstr(proxyusername = "proxyuser" proxypassword = "{SAS002}BA7B9D0652C64B185AE2159833C36B93");
@@ -69,9 +70,9 @@ options mautosource sasautos=(dscautos,SASAUTOS);
 %let DSC_PROXY_AUTH=;
 
 /******************************************************************************
-	HTTP RETRY OPTIONS 
+	HTTP RETRY OPTIONS
 	DSC_HTTP_MAX_RETRY_ATTEMPTS - no of times to retry proc http on failure
-	DSC_HTTP_RETRY_WAIT_SEC - no of seconds to wait before retrying http    
+	DSC_HTTP_RETRY_WAIT_SEC - no of seconds to wait before retrying http
 ******************************************************************************/
 %let DSC_HTTP_MAX_RETRY_ATTEMPTS=3;
 %let DSC_HTTP_RETRY_WAIT_SEC=5;
@@ -85,7 +86,7 @@ options mautosource sasautos=(dscautos,SASAUTOS);
 
 /******************************************************************************
 	SAS DATA LIBRARIES
-	DSCCNFG - Library to store configuration / history files 
+	DSCCNFG - Library to store configuration / history files
 	DSCDONL - Library to store the downloaded files
 	DSCEXTR - Library to hold extract tables created after the file is downloaded
 	DSCWH  -  LIbrary to store the detail / dbt tables
@@ -96,7 +97,7 @@ libname DSCEXTR "&UtilityLocation./data/dscextr";
 libname DSCWH "&UtilityLocation./data/dscwh";
 
 /******************************************************************************
- 	specify the date time from where you wish to start downloading data or 
+ 	specify the date time from where you wish to start downloading data or
 	keep it blank to start from begining of the available date range e.g.
 	%let DSC_LOAD_START_DTTM=%nrquote(05Nov2018 00:00:00);
 	%let DSC_LOAD_END_DTTM=%nrquote(05Nov2018 23:59:59);
@@ -110,7 +111,7 @@ libname DSCWH "&UtilityLocation./data/dscwh";
 	if the data that is already downloaded has been changed in cloud then
 	This client program will remove the downloaded data & new data will be downloaded
 	by default it will look for changes in previous 60 days data.
-	The number of days to look back and reset can be set to other values using 
+	The number of days to look back and reset can be set to other values using
 	following option
 	e.g.
 	%let AUTORESET = yes
@@ -123,33 +124,35 @@ libname DSCWH "&UtilityLocation./data/dscwh";
 
 /******************************************************************************
 	detail mart can be downloaded for minutes instead of default as hours
-	to fetch detail data every N ( between 1 to 60 , default is 60) minutes 
-	set "DSC_SUB_HOURLY_MINUTES" parameter value 
-	e.g for 10 minutes 
+	to fetch detail data every N ( between 1 to 60 , default is 60) minutes
+	set "DSC_SUB_HOURLY_MINUTES" parameter value
+	e.g for 10 minutes
 	%let DSC_SUB_HOURLY_MINUTES=10;
 ******************************************************************************/
 %let DSC_SUB_HOURLY_MINUTES=60;
 
 /******************************************************************************
 	specify schema version to use for download. e.g.
-	%let DSC_SCHEMA_VERSION=1;
+	%let DSC_SCHEMA_VERSION=1; or
+	%let DSC_SCHEMA_VERSION=6;
 ******************************************************************************/
 %let DSC_SCHEMA_VERSION=1;
 
 /*****************************************************************************
 	SET name of the category to download : e.g. discover,engagedirect ..default discover
-	%let category=discover; or %let category=discover,engagedirect;
+	%let category=discover; or %let category=discover,engagedirect; or
+	%let category=cdm;
 ******************************************************************************/
 %let CATEGORY=;
 
 /*****************************************************************************
 	if you wish you download data in test mode , SET code value : e.g. PH4TESTMODE or PH5TESTMODE
 	for regular download set it as %let CODE=;
-	Its best to run the test mode by making a copy of the download program 
+	Its best to run the test mode by making a copy of the download program
 	as the data will be downloaded in the same locations.
 	please refer download API documentation for more details about TESTMODE
 	e.g.
-	%let code=PH4TESTMODE; or %let code=PH5TESTMODE;
+	%let code=PH4TESTMODE; or %let code=PH5TESTMODE; or %let code=CDMTESTMODE;
 ******************************************************************************/
 %let CODE=;
 

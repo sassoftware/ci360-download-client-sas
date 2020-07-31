@@ -7,10 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 	%let client_version=4;
 	%put download client version no : &client_version. ;
 
-	%global retcode; 
+	%global retcode;
 	%let retcode=0;
-	
-	%dsc_version_update(version_num=&client_version.);
+
+  %if %sysfunc(upcase("&mart_nm.")) eq "CDM" %then
+      %dsc_cdm_version_update(version_num=&dsc_schema_version);
+  %else
+	    %dsc_version_update(version_num=&client_version.);
+
 	%if &retcode = 1 %then %goto ERROREXIT;
 
 	%put Start Processing &mart_nm.;
@@ -18,22 +22,23 @@ SPDX-License-Identifier: Apache-2.0
 	%let mart_download_history=dsccnfg.&mart_nm._download_history;
 	%let mart_reset_history=dsccnfg.&mart_nm._reset_history;
 
-	%global DSC_DOWNLOAD_PATH DSC_CONFIG_PATH DSC_URLLIST_MAPFILE DSC_RESET_URLLIST_MAPFILE;
+	%global DSC_DOWNLOAD_PATH DSC_CONFIG_PATH DSC_URLLIST_MAPFILE DSC_RESET_URLLIST_MAPFILE
+	        DSC_CDM_NONPAR_URLLIST_MAPFILE;
 
-	%* Get the path of the download library ; 
+	%* Get the path of the download library ;
 	proc sql noprint;
     	select 	path into :DSC_DOWNLOAD_PATH
 		from 	sashelp.vlibnam
         where 	upcase(libname)=upcase("DSCDONL");
    	quit;
-	
-	%* Get the path of the config library ; 
+
+	%* Get the path of the config library ;
 	proc sql noprint;
     	select 	path into :DSC_CONFIG_PATH
 		from 	sashelp.vlibnam
         where 	upcase(libname)=upcase("DSCCNFG");
    	quit;
-	
+
 	%* cleanup any previous left overs in the dscextr library ;
 	proc datasets lib=DSCEXTR kill noprint;
     quit;
@@ -46,7 +51,7 @@ SPDX-License-Identifier: Apache-2.0
 			DSC_URLLIST_MAPFILE=strip(DSC_CONFIG_PATH)||'/urlDataList.map';
 			DSC_RESET_URLLIST_MAPFILE=strip(DSC_CONFIG_PATH)||'/resetDataList.map';
 		%end;
-		/* identity tables reside under non partitioned api end point in detail mart 
+		/* identity tables reside under non partitioned api end point in detail mart
 		with UDM there are many more non partitioned tables added in detail mart.
 		so instead of using mart_nm as identity , renaming this as 'snapshot'
 		mart_nm = snapshot should be specified for identity as well as other metadata tables added in UDM 	*/
@@ -54,8 +59,17 @@ SPDX-License-Identifier: Apache-2.0
 		%do;
 			DSC_URLLIST_MAPFILE=strip(DSC_CONFIG_PATH)||'/urlNonPartDataList.map';
 		%end;
+		/* cdm mart uses the same api as the detail mart. */
+		%else %if %sysfunc(upcase("&mart_nm.")) eq "CDM" %then
+		%do;
+			DSC_URLLIST_MAPFILE=strip(DSC_CONFIG_PATH)||'/urlDataList.map';
+		  DSC_CDM_NONPAR_URLLIST_MAPFILE=strip(DSC_CONFIG_PATH)||'/urlNonPartDataList.map';
+			DSC_RESET_URLLIST_MAPFILE=strip(DSC_CONFIG_PATH)||'/resetDataList.map';
+			call symputx('DSC_CDM_NONPAR_URLLIST_MAPFILE',DSC_CDM_NONPAR_URLLIST_MAPFILE);
+			call symputx('DSC_CDM_DOWNLOAD_URL_ORIG', "&DSC_DOWNLOAD_URL.");
+		%end;
 		call symputx('DSC_URLLIST_MAPFILE',DSC_URLLIST_MAPFILE);
-		call symputx('DSC_RESET_URLLIST_MAPFILE',DSC_RESET_URLLIST_MAPFILE);		
+		call symputx('DSC_RESET_URLLIST_MAPFILE',DSC_RESET_URLLIST_MAPFILE);
 	run;
 
 	%let TokenGenMethod=python;
@@ -75,9 +89,9 @@ SPDX-License-Identifier: Apache-2.0
 			tenantId=symget('DSC_TENANT_ID');
 			secretKey=symget('DSC_SECRET_KEY');
 			pythoncmd=strip(python_path) || ' ' || strip(python_function_file) || ' --tenantId ' || strip(tenantId) || ' --secretKey ' || strip(secretKey);
-			call symput ('pythoncmd',pythoncmd);
+			call symput ('pythoncmd',trim(pythoncmd));
 			put pythoncmd;
-		run;	
+		run;
 		%* assign filename to route the output of python command in file ;
 		filename oscmd pipe "&pythoncmd.";
 
@@ -113,35 +127,35 @@ SPDX-License-Identifier: Apache-2.0
 	%put &DSC_AUTH_TOKEN.;
 
 	/* Create Config tables if not exits */
-	%if( &mart_nm.= detail or &mart_nm.= dbtReport ) %then
+	%if( &mart_nm.= detail or &mart_nm.= dbtReport or %sysfunc(upcase("&mart_nm.")) eq "CDM") %then
 	%do;
 		%if %sysfunc(exist(&mart_download_history.)) = 0 %then
 		%do;
 			data &mart_download_history. &mart_reset_history.;
 		    	attrib  dataRangeStartTimeStamp dataRangeEndTimeStamp length=8 format=datetime25.
-		            	download_dttm length=8 format=datetime25.6 
+		            	download_dttm length=8 format=datetime25.6
 						datekey length=8. FORMAT=12.
 						dataRangeProcessingStatus format=$30.
 						reset format=$1.
 						resetCompletedTimeStamp length=8. format=datetime25.6
 						;
 				stop;
-			run; 
+			run;
 		%end;
-	%end; 
+	%end;
 	/* check for resets if autoreset is enabled */
 	%if %lowcase(&autoreset.) = yes %then
 	%do;
-		%if( &mart_nm.= detail or &mart_nm.= dbtReport ) %then
+		%if( &mart_nm.= detail or &mart_nm.= dbtReport or %sysfunc(upcase("&mart_nm.")) eq "CDM") %then
 		%do;
 			/* run the reset first and then continue with regular download */
 			%dsc_reset_mart(reset_day_offset=&reset_day_offset.);
 			%if &retcode = 1 %then %goto ERROREXIT;
-		%end; 
+		%end;
 	%end;
 
-	/* set the download url as per the mart_nm 
-	   detail mart has two types of data partitioned & non partitioned	
+	/* set the download url as per the mart_nm
+	   detail mart has two types of data partitioned & non partitioned
 	*/
 	%if &mart_nm.= detail %then
 	%do;
@@ -150,6 +164,11 @@ SPDX-License-Identifier: Apache-2.0
 	%else %if &mart_nm.= dbtReport %then
 	%do;
 		%let DSC_DOWNLOAD_URL=&DSC_DOWNLOAD_URL%str(&mart_nm.)%nrstr(?agentName=)%str(&DSC_AGENT_NAME.)%str(&includeAllHourStatus=true)%nrstr(&schemaVersion=)&DSC_SCHEMA_VERSION.%nrstr(&category=)&category.%nrstr(&code=)&CODE.;
+	%end;
+	%else %if %sysfunc(upcase("&mart_nm.")) eq "CDM" %then
+	%do;
+		%dsc_download_non_partitioned(mart_nm=detail);
+    %let DSC_DOWNLOAD_URL=&DSC_CDM_DOWNLOAD_URL_ORIG%str(detail/partitionedData)%nrstr(?agentName=)%str(&DSC_AGENT_NAME.)%nrstr(&includeAllHourStatus=true)%nrstr(&subHourlyDataRangeInMinutes=)&DSC_SUB_HOURLY_MINUTES.%nrstr(&schemaVersion=)&DSC_SCHEMA_VERSION.%nrstr(&category=)&CATEGORY.%nrstr(&code=)&CODE.;
 	%end;
 	%else %if &mart_nm.= identity or &mart_nm.=snapshot %then
 	%do;
@@ -167,8 +186,8 @@ SPDX-License-Identifier: Apache-2.0
 	%end;
 	%put &DSC_DOWNLOAD_URL.;
 
-	/* 	if this is the first run then start loading data from the the begining hour in detail_mart 
-			or from the user defined setting DSC_LOAD_START_DTTM. 
+	/* 	if this is the first run then start loading data from the the begining hour in detail_mart
+			or from the user defined setting DSC_LOAD_START_DTTM.
 		if this is a subsequent run then start loading from previous end_dttm + 1 second.
 		if there is no data for the requested range then log errors and stop the program.
 	*/
@@ -190,7 +209,7 @@ SPDX-License-Identifier: Apache-2.0
 			call symputx('dataRangeStartTimeStamp',put(dataRangeStartTimeStamp,IS8601DT.));
 			call symputx('dataRangeEndTimeStamp',put(dataRangeEndTimeStamp,IS8601DT.));
 		run;
-		
+
 		/* when its the first run use start=0 */
 		%let DSC_DOWNLOAD_URL=&DSC_DOWNLOAD_URL%nrstr(&start=0);
 		/* when DSC_LOAD_START_DTTM is set then use that in download request url */
@@ -209,7 +228,7 @@ SPDX-License-Identifier: Apache-2.0
 	%do;
 		/* get the previous end dttm from download_history*/
 		proc sql noprint;
-			select max(dataRangeEndTimeStamp) format datetime25. into :prev_dataRangeEndTimeStamp 
+			select max(dataRangeEndTimeStamp) format datetime25. into :prev_dataRangeEndTimeStamp
 			from &mart_download_history.
 			/*where reset='0' */
 		;quit;
@@ -253,7 +272,7 @@ SPDX-License-Identifier: Apache-2.0
 	quit;
 
 	%put INFO: Time Ranges to Process on Current Page : &NoOfRanges.;
-	
+
 	%* Process each hour range ;
 	%do T = 1 %to %eval(&NoOfRanges.) ;
 		%dsc_processrange(range_id=&T,reset=false,mart_nm=&mart_nm.);
@@ -272,6 +291,7 @@ SPDX-License-Identifier: Apache-2.0
 		%put INFO: Start Processing Next Page;
 		%* get the next page url from Links table ;
 		data _null_;
+      length download_url $1024;
 			set links  (where=(rel='next'));
 			download_url=symget('DSC_DOWNLOAD_URL');
 			auth_token=symget('DSC_AUTH_TOKEN');

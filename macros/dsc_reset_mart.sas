@@ -5,19 +5,19 @@ SPDX-License-Identifier: Apache-2.0
 %macro dsc_reset_mart(reset_day_offset=);
 	%put INFO: starting reset process;
 
-	/* reset setps 
-		* get the reset urls , the response will return the download urls 
+	/* reset setps
+		* get the reset urls , the response will return the download urls
 		* check if the data returned by reset is already downloaded , if not exit
-		* check if the data is previously reseted , 		
+		* check if the data is previously reseted ,
 		* remove downloaed data and then download new from reset urls
 	*/
-	
+
 	/* get the list of mart tables */
 	%let tblstfile=&UtilityLocation./data/dsccnfg/&mart_nm._table_list.txt;
 	filename tblist "&tblstfile";
 
 	data table_list;
-		infile tblist length=reclen ; 
+		infile tblist length=reclen ;
 		input table_nm $varying999. reclen;
 	run;
 
@@ -26,16 +26,20 @@ SPDX-License-Identifier: Apache-2.0
 	quit;
 
 	proc sql noprint;
-		select table_nm into :Table_Nm1 - :Table_Nm%left(&Count_Mart_tables.) from table_list ;	
+		select table_nm into :Table_Nm1 - :Table_Nm%left(&Count_Mart_tables.) from table_list ;
 	;quit;
 
 	%if &mart_nm.= detail %then
 	%do;
-		%let DSC_RESET_URL=&DSC_DOWNLOAD_URL%str(partitionedData/resets)%nrstr(?agentName=)%str(&DSC_AGENT_NAME.)%nrstr(&martType=)%str(&mart_nm.)%nrstr(&dayOffset=)%str(&reset_day_offset.);	
+		%let DSC_RESET_URL=&DSC_DOWNLOAD_URL%str(partitionedData/resets)%nrstr(?agentName=)%str(&DSC_AGENT_NAME.)%nrstr(&martType=)%str(&mart_nm.)%nrstr(&dayOffset=)%str(&reset_day_offset.);
 	%end;
 	%else %if &mart_nm.= dbtReport %then
 	%do;
 		%let DSC_RESET_URL=&DSC_DOWNLOAD_URL%str(partitionedData/resets)%nrstr(?agentName=)%str(&DSC_AGENT_NAME.)%nrstr(&martType=dbt-report)%nrstr(&dayOffset=)%str(&reset_day_offset.);
+	%end;
+  %else %if %sysfunc(upcase("&mart_nm.")) eq "CDM" %then
+	%do;
+		%let DSC_RESET_URL=&DSC_DOWNLOAD_URL%str(partitionedData/resets)%nrstr(?agentName=)%str(&DSC_AGENT_NAME.)%nrstr(&martType=)%str(detail)%nrstr(&dayOffset=)%str(&reset_day_offset.);
 	%end;
 	%else
 	%do;
@@ -49,7 +53,7 @@ SPDX-License-Identifier: Apache-2.0
 		download_url_orig=symget('DSC_DOWNLOAD_URL');
 		call symputx('download_url_orig',download_url_orig);
 	run;
-	
+
 
 %NEXT_RESET_PAGE:
 
@@ -57,9 +61,9 @@ SPDX-License-Identifier: Apache-2.0
 	%* Call api to get the list of reset urls ;
 	%dsc_get_reset_urls();
 	%if &retcode = 1 %then %goto ERROREXIT;
-	%if &retcode=2 %then 
+	%if &retcode=2 %then
 	%do;
-		%let retcode = 0; 
+		%let retcode = 0;
 		%goto ERROREXIT;
 	%end;
 	%put INFO: Finished getting reset urls.;
@@ -69,7 +73,7 @@ SPDX-License-Identifier: Apache-2.0
 		select count as Total_NoOfResetRanges into :Total_NoOfResetRanges from Reset_root
 	;quit;
 
-	%put INFO: Total Reset Ranges : &Total_NoOfResetRanges.;	
+	%put INFO: Total Reset Ranges : &Total_NoOfResetRanges.;
 
 	%* get the number of reset ranges on current page ;
 	proc sql noprint;
@@ -104,6 +108,10 @@ SPDX-License-Identifier: Apache-2.0
 	%do;
 		%let DSC_DOWNLOAD_URL=&DSC_DOWNLOAD_URL%str(&includeAllHourStatus=true)%nrstr(&schemaVersion=)&DSC_SCHEMA_VERSION.%nrstr(&category=)&CATEGORY.%nrstr(&code=)&CODE.;
 	%end;
+	%else %if %sysfunc(upcase("&mart_nm.")) eq "CDM" %then
+  %do;
+		%let DSC_DOWNLOAD_URL=&DSC_DOWNLOAD_URL%nrstr(&includeAllHourStatus=true)%nrstr(&schemaVersion=)&DSC_SCHEMA_VERSION.%nrstr(&category=)&CATEGORY.%nrstr(&code=)&CODE.;
+  %end;
 
 	%put INFO: Starting reset for range &CurrentResetRange. &reset_start. &reset_end;
 
@@ -113,7 +121,7 @@ SPDX-License-Identifier: Apache-2.0
 	/* get the download urls for current reset range */
 	%dsc_get_download_urls;
 	%if &retcode = 1 %then %goto ERROREXIT;
-	
+
 	%put INFO: Finished getting urls for reset range &reset_start. &reset_end;
 
 	%* Check the number of url pages to process ;
@@ -129,12 +137,12 @@ SPDX-License-Identifier: Apache-2.0
 	quit;
 
 	%put INFO: Time Ranges to Process on Current Page : &NoOfRanges.;
-	
+
 	%* Process each hour range ;
 	%do T = 1 %to %eval(&NoOfRanges.) ;
 		%dsc_processrange(range_id=&T,reset=true,mart_nm=&mart_nm.,reset_completed=&reset_completed.);
 		%if &retcode = 1 %then %goto ERROREXIT;
-		%let NoOfRangesProcessed=%eval(&NoOfRangesProcessed. + 1);	
+		%let NoOfRangesProcessed=%eval(&NoOfRangesProcessed. + 1);
 	%end;
 
 	%put INFO: Finished Downloading Current Page;
@@ -149,12 +157,12 @@ SPDX-License-Identifier: Apache-2.0
 		%if &Total_NoOfResetRanges = %eval(&NoOfResetRangesProcessed) %then
 		%do;
 			%put INFO: Finished Processing all reset ranges;
-		%end;		
+		%end;
 		/* reset download_url_orig on complettion of all reset ranges on current reset (CurrentResetRange) page instead of NoOfResetRangesProcessed */
 		%else %if &CurrentResetRange. = &NoOfResetRanges. %then
 		%do;
 			%put INFO: Getting Next Reset Url from RESET_LINKS;
-			/*this means the reset ranges on the current page are done but as the first condition was false there are more pages to reset */			
+			/*this means the reset ranges on the current page are done but as the first condition was false there are more pages to reset */
 			/*set the next RESET download URL */
 			data _null_;
 				set Reset_links  (where=(rel='next'));
@@ -179,7 +187,7 @@ SPDX-License-Identifier: Apache-2.0
 			/*increment the resetRange counter*/
 			%let CurrentResetRange=%eval(&CurrentResetRange. + 1);
 			%goto NEXT_RESET_RANGE;
-		%end;		
+		%end;
 	%end;
 	%else
 	%do;

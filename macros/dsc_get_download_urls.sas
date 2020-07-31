@@ -3,22 +3,30 @@
  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------------*/
 %macro dsc_get_download_urls(part=1);
-	/* part=1 -- for partitioned data urls 
+	/* part=1 -- for partitioned data urls
 	   part=0 - for non partitioned data urls
 	*/
     %******************************************************************************;
     %* Get download urls ;
-    %******************************************************************************;	
-	%* Define filenames ;	
+    %******************************************************************************;
+	%* Define filenames ;
 	%let headerin=hdrin ;
-	%let headerout=hdrout ;		
+	%let headerout=hdrout ;
 	%let outfile=urllist ;
 	%let urlListMap=lstMap ;
 
 	filename &headerin temp ;
 	filename &headerout temp ;
 	filename &outfile temp ;
-	filename &urlListMap "&DSC_URLLIST_MAPFILE.";
+
+	%if %sysfunc(upcase("&category")) eq "CDM" and &part = 0 %then
+	%do;
+	    filename &urlListMap "&DSC_CDM_NONPAR_URLLIST_MAPFILE.";
+	%end;
+	%else
+	%do;
+      filename &urlListMap "&DSC_URLLIST_MAPFILE.";
+  %end;
 
 	%* Create request header ;
 	data _null_;
@@ -48,7 +56,7 @@
 					proxy_port=&proxy_port,
 					proxy_auth=&proxy_auth
 					);
-	%if &retcode=1 %then 
+	%if &retcode=1 %then
 	%do;
 		%dsc_echofile_tolog(fileRefs=&headerin &headerout &outfile);
 		%goto HTTPERROR;
@@ -56,7 +64,7 @@
 
 	%* When PROC HTTP is successful then read the header out file to check the status of the execution;
 	%dsc_httpreadheader(Action=GET_URLLIST,hdrout=&headerout);
-	%if &retcode=1 %then 
+	%if &retcode=1 %then
 	%do;
 		%dsc_echofile_tolog(fileRefs=&headerin &headerout &outfile);
 		%goto HTTPERROR;
@@ -95,7 +103,7 @@
 
 		proc sql;
 			create table download_details as
-			select 
+			select
 					t1.ordinal_items as range_id
 					,t1.datekey
 					,dataRangeStartTimeStamp
@@ -128,8 +136,8 @@
 			%goto ERROREXIT;
 		%end;
 
-		/* as the table nm's can be upto 32 chars , the process later adds suffix while downloading 
-		and exgtracting which can cause the table name go beyond 32 chars 
+		/* as the table nm's can be upto 32 chars , the process later adds suffix while downloading
+		and exgtracting which can cause the table name go beyond 32 chars
 		to avoid the legnth limit error create a short nm for each entity and use that for downloading and extracting */
 		data items_entities;
 			set items_entities;
@@ -157,7 +165,7 @@
 
 	/* on http errors retry http call */
 	%HTTPERROR:
-	
+
 	/* if retry attempts are left then try again */
 	%if &RetryAttemptNo. < &DSC_HTTP_MAX_RETRY_ATTEMPTS. %then
 	%do;

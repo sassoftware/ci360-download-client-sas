@@ -135,6 +135,16 @@
 %let CATEGORY=PLAN;
 %let CODE=;
 
+%* cdm mart hourly daya ;
+%let mart_nm=cdm;
+%let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
+%let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);;
+%let DSC_SCHEMA_VERSION=6;
+%let RESET_DAY_OFFSET = 60;
+%let DSC_SUB_HOURLY_MINUTES=60;
+%let CATEGORY=cdm;
+%let CODE=;
+
 ```
 
 ### Troubleshooting
