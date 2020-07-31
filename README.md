@@ -1,153 +1,199 @@
 #  SAS Customer Intelligence 360 Download Client - SAS
 
 ## Overview
- Download client program to download SAS Customer Intelligence 360 data from cloud.
+This repository hosts a SAS program that can download cloud data from SAS Customer Intelligence 360 to your local 
+system.
+
+The SAS program can perform the following tasks:
+ * Download data from the Unified Data Model (UDM) in SAS Customer Intelligence 360.
+ * Specify a time range, schema, and category of data to download.
+ * Automatically unzip the download packages and load into the on-premises installation of SAS.
+ * Keep track of all initiated downloads. This lets you download a delta from the last complete download and append it 
+   to one file per table.
+
+This topic contains the following sections:
+* [Prerequisites](#prerequisites)
+* [Installation](#installation)
+* [Running the Script](#running-the-script) (includes examples)
+* [Contributing](#contributing)
+* [License](#license)
+* [Additional Resources](#additional-resources)
 
 
-### What's New
+<!-- ## What's New -->
 
-### Prerequisites
-* BASE SAS9.4(M4)(Unicode Support)
-* Enable SAS to Allow XCMD System Option
-* Python3
-	Python is used to generate token for API authentication. 
-	make sure following python libraries are installed 
-	`getopt`, `http.client`, `urllib`, `re`, `base64`, `jwt`
-* gzip utility program 
-	Download gzip.exe. Add gzip utility program location to PATH environment variable. This is required for SAS program to read .gz files without un-compressing the file.
-* from CI360 Console - General Settings -> External -> Access 
- get the following ( create new access point if it's not already created)
+## Prerequisites
+Install these applications and supporting tools:
+
+* BASE SAS 9.4 (M4 or later). Make sure the installation includes these features:
+    * Unicode support
+    * the XCMD system option is enabled. For more information, see [XCMD System Option: Windows](https://support.sas.com/documentation/cdl/en/hostwin/69955/HTML/default/viewer.htm#p0xtd57b40ehdfn1jyk8yxemfrtv.htm)
+
+* [Python 3](https://www.python.org/). Python is used to generate the authentication token for the REST API. 
+  Make sure these packages are installed: `getopt`, `http.client`, `urllib`, `re`, `base64`, `jwt`
+
+* [gzip utility program](http://www.gzip.org/). This program is required for the SAS program to read .gz files without 
+  un-compressing the file. Follow these steps:
+	1. Download the gzip.exe program.
+	2. Add the location of the file to the PATH environment variable.
+	
+
+Configure external access to the REST API in SAS Customer Intelligence 360:
+
+1. In the user interface for SAS Customer Intelligence 360, navigate to **General Settings** > **External** > **Access**.
+
+1. Create a general access point if one does not exist. For more information, see 
+   [Create an Access Point](https://go.documentation.sas.com/?cdcId=cintcdc&cdcVersion=production.a&docsetId=cintag&docsetTarget=extapi-config-agentdef.htm&locale=en).
+
+1. Open the access point definition, and get the information about the gateway. The information is similar to this example:
 	 ```
-	 External gateway address: e.g. https://extapigwservice-dev.cidev.sas.us/marketingGateway
+	 External gateway address: https://extapigwservice-<server>/marketingGateway
 	 Name: ci360_agent
 	 Tenant ID: abc123-ci360-tenant-id-xyz
 	 Client secret: ABC123ci360clientSecretXYZ
 	```
-### Installation
-* download client program and save it to client machine.
-* set up python3 with required libraries
-* set up gzip.exe
 
-## Getting Started
+## Installation
 
-### Running
+1. Download the SAS client program from the repository, and save it to your local machine.
+1. Make sure Python3 in installed with required libraries and in the PATH environment variable.
+1. Make sure the gzip.exe file exists on your machine and is in the PATH environment variable.
 
-* Open BASE SAS9.4(M4)(Unicode Support)
-* Open dsc_download.sas macro from the macros folder
-* Set all the required macro variables in dsc_download.sas
-* Set the mart_nm to download and run the sas program.
+
+## Running the Script
+
+### Using the Script
+
+1. Open BASE SAS9.4(M4)(Unicode Support).
+1. Open the dsc_download.sas macro from the macros folder.
+1. Set the required macro variables in the dsc_download.sas file. In particular, set the `mart_nm` variable to specify 
+   which data mart from the UDM to download.
+1. Run the macro.
 
 ### Examples
-```
-%* Set the variables in dsc_download.sas
+To use these example, modify the variables in the dsc_download.sas file.
 
-%* detail mart with specific range ;
-%let mart_nm=detail;
-%let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
-%let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
-%let DSC_SCHEMA_VERSION=1;
-%let DSC_SUB_HOURLY_MINUTES=60;
-%let RESET_DAY_OFFSET = 60;
+* Download data from the detail mart from a specific date range:
+   ```
+   %let mart_nm=detail;
+   %let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
+   %let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
+   %let DSC_SCHEMA_VERSION=1;
+   %let DSC_SUB_HOURLY_MINUTES=60;
+   %let RESET_DAY_OFFSET = 60;
+   ```
 
-%* detail mart with specific range & schema version 3 ;
-%let mart_nm=detail;
-%let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
-%let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
-%let RESET_DAY_OFFSET = 60;
-%let DSC_SUB_HOURLY_MINUTES=60;
+* Download data from the detail mart from a specific date range and schema:
+   ```
+   %let mart_nm=detail;
+   %let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
+   %let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
+   %let RESET_DAY_OFFSET = 60;
+   %let DSC_SUB_HOURLY_MINUTES=60;
+   
+   %let DSC_SCHEMA_VERSION=3;
+   ```
 
-%let DSC_SCHEMA_VERSION=3;
+* Download data from the detail mart using a specific category (license):
+  ```
+  %let mart_nm=detail;
+  %let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
+  %let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
+  %let DSC_SCHEMA_VERSION=3;
+  %let RESET_DAY_OFFSET = 60;
+  %let DSC_SUB_HOURLY_MINUTES=60;
+  
+  %let CATEGORY=engagedirect;
+  ```
 
+* Download data from the detail mart with multiple categories:
+  ```
+  %let mart_nm=detail;
+  %let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
+  %let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
+  %let DSC_SCHEMA_VERSION=3;
+  %let RESET_DAY_OFFSET = 60;
+  %let DSC_SUB_HOURLY_MINUTES=60;
+  
+  %let CATEGORY=discover,engagedirect;
+  ```
 
-%* detail mart with specific category ;
-%let mart_nm=detail;
-%let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
-%let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
-%let DSC_SCHEMA_VERSION=3;
-%let RESET_DAY_OFFSET = 60;
-%let DSC_SUB_HOURLY_MINUTES=60;
+* Download test data from the detail mart;
+  ```
+  %let mart_nm=detail;
+  %let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
+  %let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
+  %let DSC_SCHEMA_VERSION=3;
+  %let RESET_DAY_OFFSET = 60;
+  %let DSC_SUB_HOURLY_MINUTES=60;
+  %let CATEGORY=;
+  
+  %let CODE=PH4TESTMODE;
+  ```
 
-%let CATEGORY=engagedirect;
+* Download subhourly data from the detail mart:
+  ```
+  %let mart_nm=detail;
+  %let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
+  %let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
+  %let DSC_SCHEMA_VERSION=3;
+  %let RESET_DAY_OFFSET = 60;
+  %let CATEGORY=;
+  %let CODE=;
+  
+  %let DSC_SUB_HOURLY_MINUTES=10;
+  ```
 
-%*  detail mart with multiple categories ;
-%let mart_nm=detail;
-%let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
-%let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
-%let DSC_SCHEMA_VERSION=3;
-%let RESET_DAY_OFFSET = 60;
-%let DSC_SUB_HOURLY_MINUTES=60;
+* Download data from the dbtReport mart from a specific date range:
+  ```
+  %let mart_nm=dbtReport;
+  %let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
+  %let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
+  %let DSC_SCHEMA_VERSION=3;
+  %let RESET_DAY_OFFSET = 60;
+  %let DSC_SUB_HOURLY_MINUTES=60;
+  %let CATEGORY=;
+  %let CODE=;
+  ```
 
-%let CATEGORY=discover,engagedirect;
+* Download identity data and metadata tables:
+  ```
+  %let mart_nm=snapshot;
+  %let DSC_LOAD_START_DTTM=;
+  %let DSC_LOAD_END_DTTM=;
+  %let DSC_SCHEMA_VERSION=4;
+  %let RESET_DAY_OFFSET = 60;
+  %let DSC_SUB_HOURLY_MINUTES=60;
+  %let CATEGORY=all;
+  %let CODE=;
+  ```
 
+* Download metadata for items in SAS 360 Plan: 
+  ```
+  %* plan data ;
+  %let mart_nm=snapshot;
+  %let DSC_LOAD_START_DTTM=;
+  %let DSC_LOAD_END_DTTM=;
+  %let DSC_SCHEMA_VERSION=5;
+  %let RESET_DAY_OFFSET = 60;
+  %let DSC_SUB_HOURLY_MINUTES=60;
+  %let CATEGORY=PLAN;
+  %let CODE=;
+  ```
 
-%* detail mart - Test Mode data ;
-%let mart_nm=detail;
-%let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
-%let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
-%let DSC_SCHEMA_VERSION=3;
-%let RESET_DAY_OFFSET = 60;
-%let DSC_SUB_HOURLY_MINUTES=60;
-%let CATEGORY=;
+* Download hourly data from the CDM mart:
+  ```
+  %let mart_nm=cdm;
+  %let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
+  %let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);;
+  %let DSC_SCHEMA_VERSION=6;
+  %let RESET_DAY_OFFSET = 60;
+  %let DSC_SUB_HOURLY_MINUTES=60;
+  %let CATEGORY=cdm;
+  %let CODE=;
+  ```
 
-%let CODE=PH4TESTMODE;
-
-
-%* detail mart - subhourly data ;
-%let mart_nm=detail;
-%let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
-%let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
-%let DSC_SCHEMA_VERSION=3;
-%let RESET_DAY_OFFSET = 60;
-%let CATEGORY=;
-%let CODE=;
-
-%let DSC_SUB_HOURLY_MINUTES=10;
-
-
-%* dbtReport mart with specific range ;
-%let mart_nm=dbtReport;
-%let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
-%let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);
-%let DSC_SCHEMA_VERSION=3;
-%let RESET_DAY_OFFSET = 60;
-%let DSC_SUB_HOURLY_MINUTES=60;
-%let CATEGORY=;
-%let CODE=;
-
-
-%* identity and all categories metadata tables ;
-%let mart_nm=snapshot;
-%let DSC_LOAD_START_DTTM=;
-%let DSC_LOAD_END_DTTM=;
-%let DSC_SCHEMA_VERSION=4;
-%let RESET_DAY_OFFSET = 60;
-%let DSC_SUB_HOURLY_MINUTES=60;
-%let CATEGORY=all;
-%let CODE=;
-
-%* plan data ;
-%let mart_nm=snapshot;
-%let DSC_LOAD_START_DTTM=;
-%let DSC_LOAD_END_DTTM=;
-%let DSC_SCHEMA_VERSION=5;
-%let RESET_DAY_OFFSET = 60;
-%let DSC_SUB_HOURLY_MINUTES=60;
-%let CATEGORY=PLAN;
-%let CODE=;
-
-%* cdm mart hourly daya ;
-%let mart_nm=cdm;
-%let DSC_LOAD_START_DTTM=%nrquote(12Jan2020 13:00:00);
-%let DSC_LOAD_END_DTTM=%nrquote(12Jan2020 13:59:59);;
-%let DSC_SCHEMA_VERSION=6;
-%let RESET_DAY_OFFSET = 60;
-%let DSC_SUB_HOURLY_MINUTES=60;
-%let CATEGORY=cdm;
-%let CODE=;
-
-```
-
-### Troubleshooting
+<!-- ### Troubleshooting -->
 
 
 ## Contributing
