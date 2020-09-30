@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-Copyright © 2020, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+Copyright Â© 2020, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------------*/
 %macro dsc_download_non_partitioned(mart_nm=);
@@ -118,6 +118,7 @@ SPDX-License-Identifier: Apache-2.0
 	%put &download_dttm;
 
 	/* Combine all the identity parts downloaded and replace the target identity table */
+
 	%let Entities=;
 	proc sql noprint;
 		select distinct upcase(entityName) ,entity_cd  into :Entities separated by ',' , :Entitiy_cds separated by ','
@@ -127,7 +128,7 @@ SPDX-License-Identifier: Apache-2.0
 	%put &sqlobs.;
 	%put &Entities.;
 
-	%let entityNum=0;
+    %let entityNum=0;
 	%if &Entities  ne %then
 	%do;
 		%do N = 1 %to %eval(&sqlobs.) ;
@@ -169,10 +170,96 @@ SPDX-License-Identifier: Apache-2.0
 				end;
 			run;
 
+
 			%* replace the old entity ;
-			data DSCWH.&&entity&entityNum.;
-				set &&entity&entityNum. ;
+            %let tbl_nm = &&entity&entityNum.;
+			%put &tbl_nm.;
+
+     %if "&tbl_nm." = "IDENTITY_MAP" %then %do;
+          
+	    %if %sysfunc(exist(DSCWH.&&entity&entityNum.)) %then %do;
+             proc sql noprint;
+                 create table update_records as
+					  select * from &&entity&entityNum. as a inner join
+					                 DSCWH.&&entity&entityNum. as b
+					  on a.source_identity_id = b.source_identity_id
+                      and a.processed_dttm ne b.processed_dttm;
+             quit;
+
+		     /*data insert_records;
+                   merge DSCWH.&&entity&entityNum. (in=a) &&entity&entityNum.(in=b);
+                   by source_identity_id;
+                   if b and not a;
+             run;*/
+
+			 proc sql noprint;
+                create table insert_records as
+                select * from &&entity&entityNum. where source_identity_id not in  ( select source_identity_id from DSCWH.&&entity&entityNum. );
+             quit;
+
+
+		     data recrds_tbl;
+             set insert_records update_records;
+             run;
+
+
+			 proc sql noprint;
+		             select count(*) into :rcd_cnt
+		             from  recrds_tbl;
+	         quit;
+
+			 %put &rcd_cnt.;
+			 %if %sysevalf(&rcd_cnt. > 0) %then %do;
+                  data DSCWH.&&entity&entityNum.;
+    			          modify DSCWH.&&entity&entityNum. recrds_tbl ;
+    			          by source_identity_id;
+    			          select(_IORC_);
+        			      when (%SYSRC(_SOK))
+        			      do;
+            			    replace;
+        			      end;
+        			      when (%SYSRC(_DSENMR))
+        			      do;
+            			   _error_= 0;
+            			    output;
+        			      end;
+			              otherwise
+        			      do;
+            			    stop;
+        			     end;
+    			         end;
+			        run;
+
+			     proc sql noprint;
+			       drop table insert_records ;
+                 quit;
+                 proc sql noprint;
+                    drop table update_records;
+			      quit;
+                 proc sql noprint;
+			       drop table recrds_tbl;
+		         quit;
+			 %end;
+			 %else %do;
+                  %put "No new records to be inserted and updated";
+			 %end;
+
+		%end;
+		%else %do;
+            data DSCWH.&&entity&entityNum.;
+			set &&entity&entityNum. ;
 			run;
+
+		%end;
+	 		    
+	 %end;
+	 %else %do;
+        data DSCWH.&&entity&entityNum.;
+				set &&entity&entityNum. ;
+		run;
+
+     %end;
+
 
 			data identity_hist;
 				attrib  entityName format=$200. lastModifiedTimestamp download_dttm length=8 format=datetime25.;
@@ -202,7 +289,7 @@ SPDX-License-Identifier: Apache-2.0
     			end;
 			run;
 
-			%* convert space separated table names into comma separated table names ;
+		 %* convert space separated table names into comma separated table names ;
 			data _null_;
 				set ExtPartList end=last;
 				if _n_ = 1 then
