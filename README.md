@@ -11,14 +11,13 @@
 * Enable SAS to Allow XCMD System Option
 * Python3
 	Python is used to generate token for API authentication. 
-	make sure following python libraries are installed 
-	`getopt`, `http.client`, `urllib`, `re`, `base64`, `jwt`
+	Make sure the following modules are installed for Python: `getopt`, `http.client`, `urllib`, `re`, `base64`, `PyJWT`.
 * gzip utility program 
 	Download gzip.exe. Add gzip utility program location to PATH environment variable. This is required for SAS program to read .gz files without un-compressing the file.
-* from CI360 Console - General Settings -> External -> Access 
+* from CI360 Console - General Settings -> External Access -> Access Points
  get the following ( create new access point if it's not already created)
 	 ```
-	 External gateway address: e.g. https://extapigwservice-dev.cidev.sas.us/marketingGateway
+	 External gateway address: e.g. https://extapigwservice-<server>/marketingGateway
 	 Name: ci360_agent
 	 Tenant ID: abc123-ci360-tenant-id-xyz
 	 Client secret: ABC123ci360clientSecretXYZ
