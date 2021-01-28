@@ -10,10 +10,10 @@
 				download_dttm format=datetime25.6
 				dataRangeProcessingStatus format=$30.
 				;
-		set items (where = (ordinal_items= &range_id.));		
+		set items (where = (ordinal_items= &range_id.));
 		download_dttm=datetime();
 		keep dataRangeStartTimeStamp dataRangeEndTimeStamp download_dttm dataRangeProcessingStatus datekey reset resetCompletedTimeStamp;
-		call symputx('schemaUrl' ,schemaUrl);		
+		call symputx('schemaUrl' ,schemaUrl);
 
 		schemaVer=tranwrd(schemaVersion, ".", "_");
 		call symputx('schemaVersion' ,schemaVer);
@@ -21,7 +21,7 @@
 		call symputx('dataRangeProcessingStatus' ,dataRangeProcessingStatus);
 		call symput('dataRangeStartTimeStamp' ,dataRangeStartTimeStamp);
 		call symput('dataRangeEndTimeStamp' ,dataRangeEndTimeStamp);
-		
+
 		range_start=put(dataRangeStartTimeStamp,datetime25.6);
 		range_end=put(dataRangeEndTimeStamp,datetime25.6);
 		call symput('range_start',range_start);
@@ -30,19 +30,19 @@
 
 		reset_flag=symget('reset');
 		reset_completed=symget('reset_completed');
-		if reset_flag = 'true' then 
+		if reset_flag = 'true' then
 		do;
 			reset='1';
 			resetCompletedTimeStamp=input(reset_completed,datetime25.6);
 		end;
-		else 
+		else
 		do;
 			reset='0';
 		end;
 	run;
 
 	%put INFO: Downloading range_id :&range_id. from &range_start. to &range_end.;
-	
+
 	%if &reset. = true %then
 	%do;
 		%put INFO: Reset Mode: Checking if datekey=&datekey. is downloaded earlier ;
@@ -63,22 +63,22 @@
 		%let prev_resetCompletedTimeStamp=;
 		%let prev_reset=0;
 		proc sql noprint;
-			select 	max(resetCompletedTimeStamp) as resetCompletedTimeStamp format=datetime25.6  
+			select 	max(resetCompletedTimeStamp) as resetCompletedTimeStamp format=datetime25.6
 					,count(*) as prev_reset
-				into :prev_resetCompletedTimeStamp 
+				into :prev_resetCompletedTimeStamp
 					,:prev_reset
 			from 	&mart_download_history.
 			where 	datekey=input("&datekey.",12.)
 			and 	reset='1'
 		;quit;
 
-		%if &prev_reset. > 0 %then 
+		%if &prev_reset. > 0 %then
 		%do;
 			%if &prev_resetCompletedTimeStamp. = &RESET_COMPLETED. %then
 			%do;
 				%put INFO: Reset Mode: Reset Data for datekey=&datekey. with resetCompletedTimeStamp=&RESET_COMPLETED. is already downloaded, Skipping Reset;
 				%goto SKIPRANGE ;
-			%end;	
+			%end;
 		%end;
 
 		%put INFO: Reset Mode: Deleting records for datekey=&datekey.;
@@ -90,26 +90,32 @@
 	%if (&dataRangeProcessingStatus. = NO_DATA or &dataRangeProcessingStatus. = ERROR or &dataRangeProcessingStatus. = RESET_INPROGRESS )%then
 	%do;
 		proc append base=&mart_download_history. data=work.download_history force;
-		run;		
+		run;
 		%put INFO: Date range &range_start. to &range_end. dataRangeProcessingStatus:&dataRangeProcessingStatus.;
 		%put INFO:	Skipping this range ;
 		%goto SKIPRANGE ;
 	%end;
 
-	%let schemaName=&mart_nm;
-	
+  /* Make sure detail and cdm schema macros are distinct */
+  %if %sysfunc(upcase("&category.")) eq "CDM" %then %do;
+    %let schemaName=cdm;
+  %end;
+  %else %do;
+    %let schemaName=&mart_nm;
+  %end;
+
 	%* Check if the schema version exists else create it ;
 	%dsc_create_attrib(schemaName=&schemaName,schemaVersion=&schemaVersion,schemaUrl=&schemaUrl.);
-	
-	%if &retcode=1 %then 
+
+	%if &retcode=1 %then
 	%do;
 		%goto ERROREXIT;
 	%end;
 
-	
+
 	%global dsc_schema_macro_nm;
 	%let dsc_schema_macro_nm=dsc_&schemaName._v&schemaVersion;
-	
+
 	%*loop through all entities in the range , download each url file and create sas dataset ;
 	filename filelst temp ;
 	data _null_ ;
@@ -121,24 +127,24 @@
 		file_part_no=sum(file_part_no + 1);
 		/* when only 1 part file */
 		if first.entityName =1 and last.entityName = 1 then
-		do;		
+		do;
 			put '%dsc_download_file( url_id='  url_id ', file_part_no=' file_part_no ', datekey=' datekey ');' ;
 			file_part_no=0;
 		end;
 		/* when not the firt or last part */
-		else if last.entityName = 0 then 
+		else if last.entityName = 0 then
 		do;
 			put '%dsc_download_file( url_id='  url_id ', file_part_no=' file_part_no ', datekey=' datekey ');' ;
 		end;
 		/* when the last part */
-		else if last.entityName = 1 then 
+		else if last.entityName = 1 then
 		do;
 			put '%dsc_download_file( url_id='  url_id ', file_part_no=' file_part_no ', datekey=' datekey ');' ;
 			file_part_no=0;
-		end;	
+		end;
 	run;
 	%include filelst;
-	filename filelst clear;	
+	filename filelst clear;
 	%put INFO: Finished Downloading files for range_id:&range_id.;
 
 	%if &retcode = 1 %then %goto ERROREXIT;

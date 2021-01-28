@@ -94,7 +94,14 @@ SPDX-License-Identifier: Apache-2.0
 		schemaVer=tranwrd(schemaVersion, ".", "_");
 		call symputx('schemaVersion' ,schemaVer);
 	run;
-	%let schemaName=&mart_nm;
+
+  /* Make sure detail and cdm schema macros are distinct */
+  %if %sysfunc(upcase("&category.")) eq "CDM" %then %do;
+    %let schemaName=cdm;
+  %end;
+  %else %do;
+    %let schemaName=&mart_nm;
+  %end;
 
 	%* Check if the schema version exists else create it ;
 	%dsc_create_attrib(schemaName=&schemaName,schemaVersion=&schemaVersion,schemaUrl=&schemaUrl.);
@@ -176,7 +183,7 @@ SPDX-License-Identifier: Apache-2.0
 			%put &tbl_nm.;
 
      %if "&tbl_nm." = "IDENTITY_MAP" %then %do;
-          
+
 	    %if %sysfunc(exist(DSCWH.&&entity&entityNum.)) %then %do;
              proc sql noprint;
                  create table update_records as
@@ -251,7 +258,7 @@ SPDX-License-Identifier: Apache-2.0
 			run;
 
 		%end;
-	 		    
+
 	 %end;
 	 %else %do;
         data DSCWH.&&entity&entityNum.;
