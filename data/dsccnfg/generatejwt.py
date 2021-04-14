@@ -32,7 +32,11 @@ def main(argv):
    encodedSecret = base64.b64encode(secretKey)
    #Generate the JWT
    token = jwt.encode({'clientID': tenantId}, encodedSecret, algorithm='HS256')
-   print (bytes.decode(token))  
+   #print (bytes.decode(token))  
+   try:
+      print (bytes.decode(token))
+   except:
+      print(token)
    
 
 if __name__ == "__main__":
