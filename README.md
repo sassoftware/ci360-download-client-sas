@@ -158,4 +158,4 @@ We welcome your contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) fo
 This project is licensed under the [Apache 2.0 License](LICENSE).
 
 ## Additional Resources
-For more information, see [Downloading Data from SAS Customer Intelligence 360](https://go.documentation.sas.com/?cdcId=cintcdc&cdcVersion=production.a&docsetId=cintag&docsetTarget=extapi-discover-service.htm&locale=en#p0kj5ymn5wuyqdn1209mw0xcfinc).
+For more information, see [Downloading Data Tables with the REST API](https://go.documentation.sas.com/?softwareId=ONEMKTMID&softwareVersion=production.a&softwareContextId=DownloadDataTables) in the Help Center for SAS Customer Intelligence 360.
