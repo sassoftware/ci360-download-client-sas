@@ -1,5 +1,5 @@
-/*-----------------------------------------------------------------------------
- Copyright © 2020, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
+ï»¿/*-----------------------------------------------------------------------------
+ Copyright ï¿½ 2020, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------------*/
 %macro dsc_processrange(range_id=,reset=,mart_nm=,reset_completed=);
@@ -13,7 +13,8 @@
 		set items (where = (ordinal_items= &range_id.));
 		download_dttm=datetime();
 		keep dataRangeStartTimeStamp dataRangeEndTimeStamp download_dttm dataRangeProcessingStatus datekey reset resetCompletedTimeStamp;
-		call symputx('schemaUrl' ,schemaUrl);
+		schemaUrl2='%nrstr('||strip(schemaUrl)||')';
+		call symputx('schemaUrl' ,schemaUrl2);
 
 		schemaVer=tranwrd(schemaVersion, ".", "_");
 		call symputx('schemaVersion' ,schemaVer);

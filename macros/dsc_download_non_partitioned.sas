@@ -1,4 +1,4 @@
-/*-----------------------------------------------------------------------------
+﻿/*-----------------------------------------------------------------------------
 Copyright © 2020, SAS Institute Inc., Cary, NC, USA.  All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------------*/
@@ -89,7 +89,8 @@ SPDX-License-Identifier: Apache-2.0
 
 	data _null_;
 		set items ;
-		call symputx('schemaUrl' ,schemaUrl);
+		schemaUrl2='%nrstr('||strip(schemaUrl)||')';
+		call symputx('schemaUrl' ,schemaUrl2);
 		call symputx('schemaVersion' ,schemaVersion);
 		schemaVer=tranwrd(schemaVersion, ".", "_");
 		call symputx('schemaVersion' ,schemaVer);
