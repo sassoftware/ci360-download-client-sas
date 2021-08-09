@@ -5,11 +5,11 @@
 %macro dsc_get_reset_urls();
     %******************************************************************************;
     %* Get reset urls ;
-    %******************************************************************************;	
+    %******************************************************************************;
 
-	%* Define filenames ;	
+	%* Define filenames ;
 	%let headerin=hdrin ;
-	%let headerout=hdrout ;		
+	%let headerout=hdrout ;
 	%let outfile=urllist ;
 	%let urlListMap=ResetMap ;
 
@@ -46,7 +46,7 @@
 					proxy_port=&proxy_port,
 					proxy_auth=&proxy_auth
 					);
-	%if &retcode=1 %then 
+	%if &retcode=1 %then
 	%do;
 		%dsc_echofile_tolog(fileRefs=&headerin &headerout &outfile);
 		%goto HTTPERROR;
@@ -54,7 +54,7 @@
 
 	%* When PROC HTTP is successful then read the header out file to check the status of the execution;
 	%dsc_httpreadheader(Action=GET_URLLIST,hdrout=&headerout);
-	%if &retcode=1 %then 
+	%if &retcode=1 %then
 	%do;
 		%dsc_echofile_tolog(fileRefs=&headerin &headerout &outfile);
 		%goto HTTPERROR;
@@ -66,6 +66,26 @@
 
 	proc copy in=jsondata out=work;
 	run;
+
+    %let nobs = 0;
+	proc sql noprint;
+        select nobs into :nobs separated by ' ' from dictionary.tables
+        where libname="WORK" and memname='RESET_ROOT';
+    quit;
+
+    %if &nobs = 0 %then %do;
+        data _null_;
+            set jsondata.alldata;
+            if upcase(p1) = trim('MESSAGE') then do;
+                warning = "WARNING:  " || trim(value);
+                put warning;
+            end;
+        run;
+
+        %let retcode=2;
+        %put ERROR: No Data Available for Reset;
+       %goto ERROREXIT;
+    %end;
 
 	%* check if there are reset date ranges available to process ;
 	proc sql noprint;
@@ -86,7 +106,7 @@
 
 	proc sql;
 		create table reset_details as
-		select 
+		select
 				t1.ordinal_items as range_id
 				,t1.datekey
 				,t1.dataRangeStartTimeStamp
@@ -95,12 +115,12 @@
 				,t1.downloadUrl
 		from	reset_items t1
 	;quit;
-	
+
 	%goto HTTPSUCCESS;
 
 	/* on http errors retry http call */
 	%HTTPERROR:
-	
+
 	/* if retry attempts are left then try again */
 	%if &RetryAttemptNo. < &DSC_HTTP_MAX_RETRY_ATTEMPTS. %then
 	%do;

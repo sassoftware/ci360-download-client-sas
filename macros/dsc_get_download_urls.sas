@@ -79,6 +79,27 @@
 	/* for partitioned data */
 	%if &part = 1 %then
 	%do;
+
+        %let nobs = 0;
+        proc sql noprint;
+            select nobs into :nobs separated by ' ' from dictionary.tables
+            where libname="WORK" and memname='ITEMS';
+        quit;
+
+        %if &nobs = 0 %then %do;
+            data _null_;
+                set jsondata.alldata;
+                    if upcase(p1) = trim('MESSAGE') then do;
+                        warning = "WARNING:  " || trim(value);
+                        put warning;
+                    end;
+            run;
+
+            %let retcode=1;
+            %put ERROR: No Data Available for Download;
+            %goto ERROREXIT;
+        %end;
+
 		%* check if there are date ranges available to process ;
 		proc sql noprint;
 			select count(*) into :date_range_cnt from Items;
@@ -125,6 +146,27 @@
 	/* for non partitioned data */
 	%else %if &part = 0 %then
 	%do;
+
+        %let nobs = 0;
+        proc sql noprint;
+            select nobs into :nobs separated by ' ' from dictionary.tables
+            where libname="WORK" and memname='ITEMS_ENTITIES';
+        quit;
+
+        %if &nobs = 0 %then %do;
+            data _null_;
+                set jsondata.alldata;
+                if upcase(p1) = trim('MESSAGE') then do;
+                    warning = "WARNING:  " || trim(value);
+                    put warning;
+                end;
+            run;
+
+            %let retcode=1;
+            %put ERROR: No Data Available for Download;
+            %goto ERROREXIT;
+        %end;
+
 		%* check if there are date ranges available to process ;
 		proc sql noprint;
 			select count(*) into :non_part_cnt from Items_entities;
