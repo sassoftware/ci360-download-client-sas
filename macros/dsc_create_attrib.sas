@@ -74,7 +74,7 @@
         /* write the attrib statement for the table */
         data _null_;
             file dmschema mod;
-            default_datatype='FORMAT=$500.';
+            default_datatype='FORMAT=$4000.';
 			map_datatype_default='FORMAT=$4000.';
             ident1=8;
             ident2=12;

@@ -4,14 +4,14 @@
 -----------------------------------------------------------------------------*/
 %macro dsc_cdm_version_update(version_num=);
 /* while moving to new version if you need to update existing tables write version specific changes here */
-
-    %if &version_num. ne 6 %then %do;
+/*  need to allow using schema 8 - commenting out hard reference.
+    %if &version_num. ne 8 %then %do;
         %put ERROR: CDM Schema Version mismatch;
         %put ERROR: Download KSA expects Schema Version 6, this is Schema Version &version_num..;
         %let retcode=1 ;
 				%goto EXIT;
     %end;
-
+*/
     data cdm_version_hist;
 		    attrib ver_num length= 8.
                ver_create_dttm length=8. format=datetime25.6;
