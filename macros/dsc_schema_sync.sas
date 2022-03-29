@@ -82,7 +82,7 @@
 		%put INFO: Start updating schema chages;
 		/* create alter table statements for the new columns and execute them */
 		data _null_ ;
-			default_datatype='char(500)';
+			default_datatype='char(4000)';
 			map_datatype_default='char(4000)';
 		    set schema_changes end=eof;
 			libnm=symget('libnm');
