@@ -61,7 +61,9 @@ This topic contains the following sections:
    
    **Note:** The start and end ranges are only used for the script's first run. After the first run, the download history is stored in the data/dsccnfg directory. To force the script to use the variables for start date and end date, delete or move the history information.
    
-   See the [Examples](#examples) section for different combinations of values.
+   In addition, the values in the dataRangeStartTimeStamp column and dataRangeEndTimeStamp column in the download history tables are in the UTC time zone. The  values in the download_dttm column is in the local time zone.
+   
+See the [Examples](#examples) section for different combinations of values.
 
 #### Examples
 ```
