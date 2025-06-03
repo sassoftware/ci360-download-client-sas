@@ -22,8 +22,8 @@ This topic contains the following sections:
    1. On the opening screen, enable **Add Python.exe to PATH**.
    2. Click **Customize Installation**.
    3. On the Optional Features page, ensure that you install the pip tool.
-   5. After Python is installed, ensure that these packages are installed: `getopt`, `http.client`, `urllib`, `re`, `base64`, `PyJWT`.
-      1. To list all packages that are installed with Python (through pip or by default), use this command:
+   5. After Python is installed, ensure that these libraries are installed: `getopt`, `http.client`, `urllib`, `re`, `base64`, `PyJWT`.
+      1. To list the libraries that are installed with Python (through pip or by default), use this command:
          
          ```cmd
          python -c help('modules')
