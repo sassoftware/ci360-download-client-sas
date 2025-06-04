@@ -18,28 +18,32 @@ This topic contains the following sections:
 2. Enable SAS to use the XCMD System Option. For more information, see the
      [Help Center for SAS 9.4](https://go.documentation.sas.com/?cdcId=pgmsascdc&cdcVersion=9.4_3.4) and search for the
      XCMD option.
-3. Install Python 3.10 or later: https://www.python.org/downloads/. As part of the Python install:
+3. Install Python 3.10 or later: https://www.python.org/downloads/.
+
+   As part of the Python install, make sure that you add Python to your PATH variable and install the pip tool.
+   During the Windows installation, for example:
    1. On the opening screen, enable **Add Python.exe to PATH**.
    2. Click **Customize Installation**.
    3. On the Optional Features page, ensure that you install the pip tool.
-   5. After Python is installed, ensure that these libraries are installed: `getopt`, `http.client`, `urllib`, `re`, `base64`, `PyJWT`.
-      1. To list the libraries that are installed with Python (through pip or by default), use this command:
+
+ 5. After Python is installed, ensure that these libraries are installed: `getopt`, `http.client`, `urllib`, `re`, `base64`, `PyJWT`.
+    1. (Optional) To list the libraries that are installed with Python (through pip or by default), use this command:
          
-         ```cmd
-         python -c help('modules')
-         ```
+       ```cmd
+       python -c help('modules')
+       ```
          
-      2. Use pip to install any missing libraries. Use a command like this example:
+     2. Use pip to install any missing libraries. Use a command like this example:
          
-         ```cmd
-         pip install getopt http.client urllib re base64 PyJWT
-         ```
-         
-4. Install the gzip program from https://www.gzip.org/.
+        ```cmd
+        pip install getopt http.client urllib re base64 PyJWT
+        ```
+
+6. Install the gzip program from https://www.gzip.org/.
 
    After the program is installed, add the location of the gzip program to the PATH environment variable. This is required for SAS program to read .gz files without un-compressing the file.
    
-6. Create an access point in SAS Customer Intelligence 360.
+7. Create an access point in SAS Customer Intelligence 360.
     1. From the user interface, navigate to **General Settings** > **External Access** > **Access Points**.
     2. Create a new access point if one does not exist.
     3. Get the following information from the access point:
