@@ -6,6 +6,38 @@
 	/* part=1 -- for partitioned data urls
 	   part=0 - for non partitioned data urls
 	*/
+
+    %******************************************************************************;
+    %* Get lists of tables to include and exclude;
+    %******************************************************************************;
+	%let inclusion_clause=;
+	filename incl "%sysfunc(pathname(DSCCNFG))/table_inclusion_list.txt";
+	%IF %sysfunc(fexist(incl)) %then %do;
+		data tables_to_include;
+			length entityName $32;
+			infile incl;
+			input entityName;
+		run;
+		%if &SYSNOBS > 0 %then %do;
+			%let inclusion_clause=and entityName in (select entityName from tables_to_include);
+		%end;
+	%end;
+	filename incl;
+
+	%let exclusion_clause=;
+	filename excl "%sysfunc(pathname(DSCCNFG))/table_exclusion_list.txt";
+	%IF %sysfunc(fexist(excl)) %then %do;
+		data tables_to_exclude;
+			length entityName $32;
+			infile excl;
+			input entityName;
+		run;
+		%if &SYSNOBS > 0 %then %do;
+			%let exclusion_clause=and entityName not in (select entityName from tables_to_exclude);
+		%end;
+	%end;
+	filename excl;
+
     %******************************************************************************;
     %* Get download urls ;
     %******************************************************************************;
@@ -140,6 +172,7 @@
 			on	t1.ordinal_items=t2.ordinal_items
 			left join	entities_dataurldetails t3
 			on	t2.ordinal_entities=t3.ordinal_entities
+			where 1=1 &inclusion_clause &exclusion_clause
 			order by t1.ordinal_items ,entityName
 		;quit;
 	%end;
@@ -200,6 +233,7 @@
 			on	t1.ordinal_items=t2.ordinal_items
 			inner join	Entities_dataurldetails t3
 			on	t2.ordinal_entities=t3.ordinal_entities
+			where 1=1 &inclusion_clause &exclusion_clause
 		;quit;
 	%end;
 
