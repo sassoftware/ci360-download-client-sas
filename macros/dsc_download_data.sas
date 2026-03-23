@@ -163,7 +163,7 @@ SPDX-License-Identifier: Apache-2.0
 	%end;
 	%else %if &mart_nm.= dbtReport %then
 	%do;
-		%let DSC_DOWNLOAD_URL=&DSC_DOWNLOAD_URL%str(&mart_nm.)%nrstr(?agentName=)%str(&DSC_AGENT_NAME.)%str(&includeAllHourStatus=true)%nrstr(&schemaVersion=)&DSC_SCHEMA_VERSION.%nrstr(&category=)&category.%nrstr(&code=)&CODE.;
+		%let DSC_DOWNLOAD_URL=&DSC_DOWNLOAD_URL%str(&mart_nm.)%nrstr(?agentName=)%str(&DSC_AGENT_NAME.)%nrstr(&includeAllHourStatus=true)%nrstr(&schemaVersion=)&DSC_SCHEMA_VERSION.%nrstr(&category=)&category.%nrstr(&code=)&CODE.;
 	%end;
 	%else %if %sysfunc(upcase("&mart_nm.")) eq "CDM" %then
 	%do;
